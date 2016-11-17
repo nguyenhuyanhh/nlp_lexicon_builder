@@ -17,16 +17,20 @@ if not os.path.exists(OUTPUT_DIR):
 PADDING = 0.5
 
 
-def get_duration(path):
-    """Helper function to get duration of wav file."""
-    with wave.open(path, 'r') as f:
-        return Decimal(f.getnframes()) / f.getframerate()
+def slugify_name(path):
+    """Helper function to slugify a file name."""
+    dir, file = os.path.split(path)
+    name, ext = os.path.splitext(file)
+    new_path = os.path.join(dir, slugify(name) + ext)
+    if not path == new_path:
+        os.rename(path, new_path)
+    return new_path
 
 
 def mp3_to_wav(path):
     """Helper function to convert mp3 to wav using sox."""
     dir, file = os.path.split(path)
-    new_file = slugify(os.path.splitext(file)[0]) + '.wav'
+    new_file = os.path.splitext(file)[0] + '.wav'
     new_path = os.path.join(dir, new_file)
     if not os.path.exists(new_path):
         tfm = sox.Transformer()
@@ -34,6 +38,12 @@ def mp3_to_wav(path):
         tfm.pad(end_duration=PADDING)
         tfm.build(path, new_path)
     return new_path
+
+
+def get_duration(path):
+    """Helper function to get duration of wav file."""
+    with wave.open(path, 'r') as f:
+        return Decimal(f.getnframes()) / f.getframerate()
 
 
 def main(path, char):
@@ -49,13 +59,18 @@ def main(path, char):
     json_out = os.path.join(OUTPUT_DIR, '{}.json'.format(char))
 
     # populate file list and wav list
+    # slugify file names as an intermediate to prevent errors
     for file in os.listdir(path):
-        if (os.path.splitext(file)[0][0] == char and os.path.splitext(file)[1] == '.mp3'):
+        name, ext = os.path.splitext(file)
+        if (name[0] == char and ext == '.mp3'):
             cur_path = os.path.join(path, file)
-            new_path = mp3_to_wav(cur_path)
-            file_list[os.path.splitext(file)[0]] = str(
+            temp_path = slugify_name(cur_path)
+            new_path = mp3_to_wav(temp_path)
+            if not temp_path == cur_path:
+                os.rename(temp_path, cur_path)
+            file_list[name] = str(
                 get_duration(new_path) - Decimal(PADDING))
-            wav_list[os.path.splitext(file)[0]] = new_path
+            wav_list[name] = new_path
 
     # create empty output file
     with wave.open(wav_out, 'w') as w:
