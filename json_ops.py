@@ -1,14 +1,27 @@
 import json
 import os
 import shutil
+import sys
 
 CUR_DIR = os.path.dirname(os.path.realpath(__file__))
 DOWNLOADER_DIR = os.path.join(CUR_DIR, 'downloader/')
+DATA_JSON = os.path.join(DOWNLOADER_DIR, 'data.json')
+DATA_BAK = os.path.join(DOWNLOADER_DIR, 'data.json.bak')
+ULTIMATE_JSON = os.path.join(DOWNLOADER_DIR, 'ultimate.json')
+ULTIMATE_BAK = os.path.join(DOWNLOADER_DIR, 'ultimate.json.bak')
+CLEAN_JSON = os.path.join(DOWNLOADER_DIR, 'clean.json')
 
 
-def clean_json():
+def backup():
+    """Backup data.json and ultimate.json."""
+    shutil.copy(DATA_JSON, DATA_BAK)
+    shutil.copy(ULTIMATE_JSON, ULTIMATE_BAK)
+
+
+def clean():
+    """Get a file similar to data.json, but without the failed urls."""
     fails = ['www.oxforddictionaries.com', 'www.onelook.com']
-    with open(os.path.join(DOWNLOADER_DIR, 'ultimate.json'), 'r') as f:
+    with open(ULTIMATE_JSON, 'r') as f:
         ultimate_list = json.load(f)
     clean_list = dict()
     for word, links in ultimate_list.items():
@@ -16,26 +29,39 @@ def clean_json():
             if (link.find(fails[0]) < 0 and link.find(fails[1]) < 0):
                 clean_list[word] = link
                 break
-    with open(os.path.join(DOWNLOADER_DIR, 'clean.json'), 'w') as w:
+    with open(CLEAN_JSON, 'w') as w:
         json.dump(clean_list, w, sort_keys=True, indent=4)
 
 
-def split_json(char):
-    with open(os.path.join(DOWNLOADER_DIR, 'clean.json'), 'r') as f:
+def split(char):
+    """Get a file similar to data.json, but only for words starting with char."""
+    with open(CLEAN_JSON, 'r') as f:
         clean_list = json.load(f)
     split_list = dict()
     for word, link in clean_list.items():
         if word[0] == char:
             split_list[word] = link
-    with open(os.path.join(DOWNLOADER_DIR, 'clean_{}.json'.format(char)), 'w') as w:
+    split_json = os.path.join(DOWNLOADER_DIR, 'clean_{}.json'.format(char))
+    with open(split_json, 'w') as w:
         json.dump(split_list, w, sort_keys=True, indent=4)
+    return split_json
 
 
-def change_data_json(path):
-    os.remove(os.path.join(DOWNLOADER_DIR, 'data.json'))
-    shutil.copy(path, os.path.join(DOWNLOADER_DIR, 'data.json'))
+def switch(path):
+    """Replace data.json with another similar json file."""
+    os.remove(DATA_JSON)
+    shutil.copy(path, DATA_JSON)
+
+
+def operations(char):
+    """Perform all operations on words starting with char."""
+    if not (os.path.exists(DATA_BAK) or os.path.exists(ULTIMATE_BAK)):
+        backup()
+    if not os.path.exists(CLEAN_JSON):
+        clean()
+    split_json = split(char)
+    switch(split_json)
+
 
 if __name__ == '__main__':
-    clean_json()
-    split_json('a')
-    change_data_json(os.path.join(DOWNLOADER_DIR, 'clean_a.json'))
+    operations(sys.argv[1])

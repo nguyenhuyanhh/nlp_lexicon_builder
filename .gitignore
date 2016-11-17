@@ -1,7 +1,9 @@
 # Python
+.py[cod]
 
-# Downloader
+# Data
 downloader/
+build_output/
 
 # VSCode
 .vscode/
