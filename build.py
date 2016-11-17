@@ -6,6 +6,7 @@ from decimal import Decimal
 from time import time
 
 import sox
+from slugify import slugify
 
 CUR_DIR = os.path.dirname(os.path.realpath(__file__))
 DOWNLOADER_DIR = os.path.join(CUR_DIR, 'downloader/')
@@ -25,7 +26,7 @@ def get_duration(path):
 def mp3_to_wav(path):
     """Helper function to convert mp3 to wav using sox."""
     dir, file = os.path.split(path)
-    new_file = os.path.splitext(file)[0] + '.wav'
+    new_file = slugify(os.path.splitext(file)[0]) + '.wav'
     new_path = os.path.join(dir, new_file)
     if not os.path.exists(new_path):
         tfm = sox.Transformer()
@@ -75,8 +76,8 @@ def main(path, char):
         cbm = sox.Combiner()
         cbm.build(cbm_list, wav_out, 'concatenate')
     os.rename(wav_out, wav_temp)
-    cbm_wav_list = [wav_list[sorted_keys[i]]
-                    for i in range((no_rounds - 1) * files_per_round, len(sorted_keys))]
+    cbm_wav_list = [wav_list[sorted_keys[i]] for i in range(
+        (no_rounds - 1) * files_per_round, len(sorted_keys))]
     cbm_list = [wav_temp] + cbm_wav_list
     cbm = sox.Combiner()
     cbm.build(cbm_list, wav_out, 'concatenate')
