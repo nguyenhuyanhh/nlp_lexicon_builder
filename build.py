@@ -80,7 +80,7 @@ def main(path, char):
 
     # combine, a few files at once
     sorted_keys = sorted(wav_list.keys())
-    files_per_round = 50
+    files_per_round = 100
     no_rounds = int(len(sorted_keys) / files_per_round)
 
     for round in range(no_rounds - 1):
