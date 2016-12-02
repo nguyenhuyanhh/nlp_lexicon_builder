@@ -3,7 +3,6 @@ import sys
 import json
 import wave
 from decimal import Decimal
-from time import time
 
 import sox
 from slugify import slugify
@@ -17,39 +16,39 @@ if not os.path.exists(OUTPUT_DIR):
 PADDING = 0.5
 
 
-def slugify_name(path):
+def slugify_name(path_):
     """Helper function to slugify a file name."""
-    dir, file = os.path.split(path)
-    name, ext = os.path.splitext(file)
-    new_path = os.path.join(dir, slugify(name) + ext)
-    if not path == new_path:
-        os.rename(path, new_path)
+    dir_, file_ = os.path.split(path_)
+    name, ext = os.path.splitext(file_)
+    new_path = os.path.join(dir_, slugify(name) + ext)
+    if not path_ == new_path:
+        os.rename(path_, new_path)
     return new_path
 
 
-def mp3_to_wav(path):
-    """Helper function to convert mp3 to wav using sox."""
-    dir, file = os.path.split(path)
-    new_file = os.path.splitext(file)[0] + '.wav'
-    new_path = os.path.join(dir, new_file)
+def mp3_to_wav(path_):
+    """Helper function to convert mp3 to wav with padding using sox."""
+    dir_, file_ = os.path.split(path_)
+    new_file = os.path.splitext(file_)[0] + '.wav'
+    new_path = os.path.join(dir_, new_file)
     if not os.path.exists(new_path):
         tfm = sox.Transformer()
         tfm.convert(samplerate=16000, n_channels=1, bitdepth=16)
         tfm.pad(end_duration=PADDING)
-        tfm.build(path, new_path)
+        tfm.build(path_, new_path)
     return new_path
 
 
 def get_duration(path):
     """Helper function to get duration of wav file."""
-    with wave.open(path, 'r') as f:
-        return Decimal(f.getnframes()) / f.getframerate()
+    with wave.open(path, 'r') as file_:
+        return Decimal(file_.getnframes()) / file_.getframerate()
 
 
-def main(path, char):
+def main(char):
     """
     Build the lexicon wav file of all words starting with char.
-    All raw mp3 files are under path.
+    Assume all raw mp3 files are under ./downloader/download.
     """
     start_time = 0
     wav_list = dict()
@@ -60,10 +59,10 @@ def main(path, char):
 
     # populate file list and wav list
     # slugify file names as an intermediate to prevent errors
-    for file in os.listdir(path):
-        name, ext = os.path.splitext(file)
-        if (name[0] == char and ext == '.mp3'):
-            cur_path = os.path.join(path, file)
+    for file_ in os.listdir(AUDIO_DIR):
+        name, ext = os.path.splitext(file_)
+        if name[0] == char and ext == '.mp3':
+            cur_path = os.path.join(AUDIO_DIR, file_)
             temp_path = slugify_name(cur_path)
             new_path = mp3_to_wav(temp_path)
             if not temp_path == cur_path:
@@ -73,10 +72,10 @@ def main(path, char):
             wav_list[name] = new_path
 
     # create empty output file
-    with wave.open(wav_out, 'w') as w:
-        w.setnchannels(1)
-        w.setsampwidth(2)
-        w.setframerate(16000)
+    with wave.open(wav_out, 'w') as file_out:
+        file_out.setnchannels(1)
+        file_out.setsampwidth(2)
+        file_out.setframerate(16000)
 
     # combine, a few files at once
     sorted_keys = sorted(wav_list.keys())
@@ -99,12 +98,12 @@ def main(path, char):
     os.remove(wav_temp)
 
     # build json
-    for file in sorted(file_list.keys()):
-        duration = Decimal(file_list[file])
-        file_list[file] = str(start_time), str(start_time + duration)
+    for file_ in sorted(file_list.keys()):
+        duration = Decimal(file_list[file_])
+        file_list[file_] = str(start_time), str(start_time + duration)
         start_time += (duration + Decimal(PADDING))
-    with open(json_out, 'w') as w:
-        json.dump(file_list, w, sort_keys=True, indent=4)
+    with open(json_out, 'w') as file_out:
+        json.dump(file_list, file_out, sort_keys=True, indent=4)
 
 if __name__ == '__main__':
-    main(sys.argv[1], sys.argv[2])
+    main(sys.argv[1])

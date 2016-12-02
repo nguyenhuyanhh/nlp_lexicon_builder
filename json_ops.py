@@ -19,31 +19,31 @@ def backup():
 
 
 def clean():
-    """Get a file similar to data.json, but without the failed urls."""
+    """Get a file similar to data.json, without the failed urls."""
     fails = ['www.oxforddictionaries.com', 'www.onelook.com']
-    with open(ULTIMATE_JSON, 'r') as f:
-        ultimate_list = json.load(f)
+    with open(ULTIMATE_JSON, 'r') as file_:
+        ultimate_list = json.load(file_)
     clean_list = dict()
     for word, links in ultimate_list.items():
         for link in links:
-            if (link.find(fails[0]) < 0 and link.find(fails[1]) < 0):
+            if link.find(fails[0]) < 0 and link.find(fails[1]) < 0:
                 clean_list[word] = link
                 break
-    with open(CLEAN_JSON, 'w') as w:
-        json.dump(clean_list, w, sort_keys=True, indent=4)
+    with open(CLEAN_JSON, 'w') as file_out:
+        json.dump(clean_list, file_out, sort_keys=True, indent=4)
 
 
 def split(char):
-    """Get a file similar to data.json, but only for words starting with char."""
-    with open(CLEAN_JSON, 'r') as f:
-        clean_list = json.load(f)
+    """Get a file similar to data.json, only for words starting with char."""
+    with open(CLEAN_JSON, 'r') as file_:
+        clean_list = json.load(file_)
     split_list = dict()
     for word, link in clean_list.items():
         if word[0] == char:
             split_list[word] = link
     split_json = os.path.join(DOWNLOADER_DIR, 'clean_{}.json'.format(char))
-    with open(split_json, 'w') as w:
-        json.dump(split_list, w, sort_keys=True, indent=4)
+    with open(split_json, 'w') as file_out:
+        json.dump(split_list, file_out, sort_keys=True, indent=4)
     return split_json
 
 
