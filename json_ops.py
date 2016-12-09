@@ -1,4 +1,7 @@
+"""Module for JSON operations."""
+
 import json
+import logging
 import os
 import shutil
 import sys
@@ -11,11 +14,15 @@ ULTIMATE_JSON = os.path.join(DOWNLOADER_DIR, 'ultimate.json')
 ULTIMATE_BAK = os.path.join(DOWNLOADER_DIR, 'ultimate.json.bak')
 CLEAN_JSON = os.path.join(DOWNLOADER_DIR, 'clean.json')
 
+logging.basicConfig(level=logging.INFO)
+LOG = logging.getLogger(__name__)
+
 
 def backup():
     """Backup data.json and ultimate.json."""
     shutil.copy(DATA_JSON, DATA_BAK)
     shutil.copy(ULTIMATE_JSON, ULTIMATE_BAK)
+    LOG.info('Backup completed.')
 
 
 def clean():
@@ -31,6 +38,7 @@ def clean():
                 break
     with open(CLEAN_JSON, 'w') as file_out:
         json.dump(clean_list, file_out, sort_keys=True, indent=4)
+    LOG.info('clean.json written.')
 
 
 def split(char):
@@ -44,6 +52,7 @@ def split(char):
     split_json = os.path.join(DOWNLOADER_DIR, 'clean_{}.json'.format(char))
     with open(split_json, 'w') as file_out:
         json.dump(split_list, file_out, sort_keys=True, indent=4)
+    LOG.info('Obtained json for %s.', char)
     return split_json
 
 
@@ -51,6 +60,7 @@ def switch(path):
     """Replace data.json with another similar json file."""
     os.remove(DATA_JSON)
     shutil.copy(path, DATA_JSON)
+    LOG.info('Switch completed.')
 
 
 def operations(char):
@@ -61,6 +71,7 @@ def operations(char):
         clean()
     split_json = split(char)
     switch(split_json)
+    LOG.info('Operations completed for %s.', char)
 
 
 if __name__ == '__main__':
