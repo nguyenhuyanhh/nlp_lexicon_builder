@@ -1,6 +1,9 @@
+"""Module for build operations."""
+
 import os
 import sys
 import json
+import logging
 import wave
 from decimal import Decimal
 
@@ -14,6 +17,10 @@ OUTPUT_DIR = os.path.join(CUR_DIR, 'build_output/')
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 PADDING = 0.5
+
+logging.basicConfig(level=logging.INFO)
+logging.getLogger().disabled = True
+LOG = logging.getLogger(__name__)
 
 
 def slugify_name(path_):
@@ -70,6 +77,7 @@ def main(char):
             file_list[name] = str(
                 get_duration(new_path) - Decimal(PADDING))
             wav_list[name] = new_path
+            LOG.info('Processed %s', name)
 
     # create empty output file
     with wave.open(wav_out, 'w') as file_out:
@@ -81,21 +89,27 @@ def main(char):
     sorted_keys = sorted(wav_list.keys())
     files_per_round = 100
     no_rounds = int(len(sorted_keys) / files_per_round)
+    completed = 0
 
-    for round in range(no_rounds - 1):
+    for round_ in range(no_rounds - 1):
         os.rename(wav_out, wav_temp)
         cbm_wav_list = [wav_list[sorted_keys[i]] for i in range(
-            round * files_per_round, (round + 1) * files_per_round)]
+            round_ * files_per_round, (round_ + 1) * files_per_round)]
         cbm_list = [wav_temp] + cbm_wav_list
         cbm = sox.Combiner()
         cbm.build(cbm_list, wav_out, 'concatenate')
+        completed += len(cbm_wav_list)
+        LOG.info('Completed %s files.', completed)
     os.rename(wav_out, wav_temp)
     cbm_wav_list = [wav_list[sorted_keys[i]] for i in range(
         (no_rounds - 1) * files_per_round, len(sorted_keys))]
     cbm_list = [wav_temp] + cbm_wav_list
     cbm = sox.Combiner()
     cbm.build(cbm_list, wav_out, 'concatenate')
+    completed += len(cbm_wav_list)
     os.remove(wav_temp)
+    LOG.info('Completed %s files.', completed)
+    LOG.info('Finish building wav file for %s.', char)
 
     # build json
     for file_ in sorted(file_list.keys()):
@@ -104,6 +118,7 @@ def main(char):
         start_time += (duration + Decimal(PADDING))
     with open(json_out, 'w') as file_out:
         json.dump(file_list, file_out, sort_keys=True, indent=4)
+    LOG.info('JSON written for %s.', char)
 
 if __name__ == '__main__':
     main(sys.argv[1])
