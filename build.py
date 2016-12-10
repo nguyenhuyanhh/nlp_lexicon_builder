@@ -16,7 +16,9 @@ AUDIO_DIR = os.path.join(DOWNLOADER_DIR, 'download/')
 OUTPUT_DIR = os.path.join(CUR_DIR, 'build_output/')
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
+
 PADDING = 0.5
+FILES_PER_ROUND = 100
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger().disabled = True
@@ -87,28 +89,19 @@ def main(char):
 
     # combine, a few files at once
     sorted_keys = sorted(wav_list.keys())
-    files_per_round = 100
-    no_rounds = int(len(sorted_keys) / files_per_round)
+    split_sorted_keys = [sorted_keys[i:i + FILES_PER_ROUND]
+                         for i in range(0, len(sorted_keys), FILES_PER_ROUND)]
     completed = 0
 
-    for round_ in range(no_rounds - 1):
+    for split in split_sorted_keys:
         os.rename(wav_out, wav_temp)
-        cbm_wav_list = [wav_list[sorted_keys[i]] for i in range(
-            round_ * files_per_round, (round_ + 1) * files_per_round)]
+        cbm_wav_list = [wav_list[split[i]] for i in range(len(split))]
         cbm_list = [wav_temp] + cbm_wav_list
         cbm = sox.Combiner()
         cbm.build(cbm_list, wav_out, 'concatenate')
         completed += len(cbm_wav_list)
         LOG.info('Completed %s files.', completed)
-    os.rename(wav_out, wav_temp)
-    cbm_wav_list = [wav_list[sorted_keys[i]] for i in range(
-        (no_rounds - 1) * files_per_round, len(sorted_keys))]
-    cbm_list = [wav_temp] + cbm_wav_list
-    cbm = sox.Combiner()
-    cbm.build(cbm_list, wav_out, 'concatenate')
-    completed += len(cbm_wav_list)
     os.remove(wav_temp)
-    LOG.info('Completed %s files.', completed)
     LOG.info('Finish building wav file for %s.', char)
 
     # build json
