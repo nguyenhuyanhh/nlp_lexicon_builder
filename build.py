@@ -63,7 +63,6 @@ def main(char):
     wav_list = dict()
     file_list = dict()
     wav_out = os.path.join(OUTPUT_DIR, '{}.wav'.format(char))
-    wav_temp = os.path.join(OUTPUT_DIR, '{}_temp.wav'.format(char))
     json_out = os.path.join(OUTPUT_DIR, '{}.json'.format(char))
 
     # populate file list and wav list
@@ -92,16 +91,20 @@ def main(char):
     split_sorted_keys = [sorted_keys[i:i + FILES_PER_ROUND]
                          for i in range(0, len(sorted_keys), FILES_PER_ROUND)]
     completed = 0
+    split_list = list()
 
-    for split in split_sorted_keys:
-        os.rename(wav_out, wav_temp)
-        cbm_wav_list = [wav_list[split[i]] for i in range(len(split))]
-        cbm_list = [wav_temp] + cbm_wav_list
+    for i in range(len(split_sorted_keys)):
+        wav_temp = os.path.join(OUTPUT_DIR, '{}_temp.wav'.format(i))
+        cbm_wav_list = [wav_list[split_sorted_keys[i][j]]
+                        for j in range(len(split_sorted_keys[i]))]
         cbm = sox.Combiner()
-        cbm.build(cbm_list, wav_out, 'concatenate')
+        cbm.build(cbm_wav_list, wav_temp, 'concatenate')
         completed += len(cbm_wav_list)
         LOG.info('Completed %s files.', completed)
-    os.remove(wav_temp)
+        split_list.append(wav_temp)
+    LOG.info('Combining splits for %s.', char)
+    cbm = sox.Combiner()
+    cbm.build(split_list, wav_out, 'concatenate')
     LOG.info('Finish building wav file for %s.', char)
 
     # build json
