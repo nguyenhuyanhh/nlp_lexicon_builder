@@ -25,6 +25,13 @@ def backup():
     LOG.info('Backup completed.')
 
 
+def restore():
+    """Restore data.json and ultimate.json."""
+    shutil.copy(DATA_BAK, DATA_JSON)
+    shutil.copy(ULTIMATE_JSON, ULTIMATE_BAK)
+    LOG.info('Restore completed.')
+
+
 def clean():
     """Get a file similar to data.json, without the failed urls."""
     fails = ['www.oxforddictionaries.com', 'www.onelook.com']
