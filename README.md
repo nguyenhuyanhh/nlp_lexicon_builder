@@ -24,9 +24,6 @@ downloader/             # crawler library
     download/           # raw mp3 files and converted wav files
     ultimate.json       # source json
     clean.json          # source json after cleanup
-    clean_a.json        # clean json for a
-    clean_b.json
-    ...
     data.json           # currently processed json
     download_all_mp3.py # downloader script
 build_output/           # builder output
@@ -36,7 +33,7 @@ build_output/           # builder output
     b.json
     ...
 init.sh                 # init script
-operations.py           # json operations
+operations.py           # json and downloader operations
 build.py                # builder
 exec.sh                 # exec script
 ```

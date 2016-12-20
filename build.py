@@ -106,6 +106,8 @@ def main(char):
     cbm = sox.Combiner()
     cbm.build(split_list, wav_out, 'concatenate')
     LOG.info('Finish building wav file for %s.', char)
+    for file_ in split_list:
+        os.remove(file_)
 
     # build json
     for file_ in sorted(file_list.keys()):

@@ -1,9 +1,10 @@
-"""Module for JSON operations."""
+"""Module for JSON and downloader operations."""
 
 import json
 import logging
 import os
 import shutil
+import subprocess
 import sys
 
 CUR_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -13,6 +14,7 @@ DATA_BAK = os.path.join(DOWNLOADER_DIR, 'data.json.bak')
 ULTIMATE_JSON = os.path.join(DOWNLOADER_DIR, 'ultimate.json')
 ULTIMATE_BAK = os.path.join(DOWNLOADER_DIR, 'ultimate.json.bak')
 CLEAN_JSON = os.path.join(DOWNLOADER_DIR, 'clean.json')
+ITEMS_PER_SPLIT = 1000
 
 logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger(__name__)
@@ -28,7 +30,7 @@ def backup():
 def restore():
     """Restore data.json and ultimate.json."""
     shutil.copy(DATA_BAK, DATA_JSON)
-    shutil.copy(ULTIMATE_JSON, ULTIMATE_BAK)
+    shutil.copy(ULTIMATE_BAK, ULTIMATE_JSON)
     LOG.info('Restore completed.')
 
 
@@ -49,25 +51,44 @@ def clean():
 
 
 def split(char):
-    """Get a file similar to data.json, only for words starting with char."""
+    """Get files similar to data.json, only for words starting with char."""
     with open(CLEAN_JSON, 'r') as file_:
         clean_list = json.load(file_)
     split_list = dict()
     for word, link in clean_list.items():
         if word[0] == char:
             split_list[word] = link
-    split_json = os.path.join(DOWNLOADER_DIR, 'clean_{}.json'.format(char))
-    with open(split_json, 'w') as file_out:
-        json.dump(split_list, file_out, sort_keys=True, indent=4)
-    LOG.info('Obtained json for %s.', char)
-    return split_json
+    words = list(split_list.keys())
+    split_words = [words[i:i + ITEMS_PER_SPLIT]
+                   for i in range(0, len(words), ITEMS_PER_SPLIT)]
+    count = 0
+    split_jsons = list()
+    for split_ in split_words:
+        split_json = os.path.join(
+            DOWNLOADER_DIR, 'clean_{}{}.json'.format(char, count))
+        with open(split_json, 'w') as file_out:
+            json.dump(
+                ({key: split_list[key] for key in split_}), file_out, sort_keys=True, indent=4)
+        split_jsons.append(split_json)
+        count += 1
+    LOG.info('Obtained jsons for %s.', char)
+    return split_jsons
 
 
 def switch(path):
     """Replace data.json with another similar json file."""
     os.remove(DATA_JSON)
     shutil.copy(path, DATA_JSON)
-    LOG.info('Switch completed.')
+    LOG.info('Switch completed: %s', path)
+
+
+def download():
+    """Download mp3 using the downloader library."""
+    os.chdir(DOWNLOADER_DIR)
+    arg_list = ['python3', 'download_all_mp3.py']
+    subprocess.call(arg_list)
+    os.chdir(CUR_DIR)
+    LOG.info('Download completed.')
 
 
 def main(char):
@@ -77,7 +98,10 @@ def main(char):
     if not os.path.exists(CLEAN_JSON):
         clean()
     split_json = split(char)
-    switch(split_json)
+    for split_ in split_json:
+        switch(split_)
+        download()
+        os.remove(split_)
     LOG.info('Operations completed for %s.', char)
 
 
