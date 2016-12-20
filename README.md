@@ -36,7 +36,7 @@ build_output/           # builder output
     b.json
     ...
 init.sh                 # init script
-json_ops.py             # json operations
+operations.py           # json operations
 build.py                # builder
 exec.sh                 # exec script
 ```

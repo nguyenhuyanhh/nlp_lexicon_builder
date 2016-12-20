@@ -70,7 +70,7 @@ def switch(path):
     LOG.info('Switch completed.')
 
 
-def operations(char):
+def main(char):
     """Perform all operations on words starting with char."""
     if not (os.path.exists(DATA_BAK) or os.path.exists(ULTIMATE_BAK)):
         backup()
@@ -82,4 +82,4 @@ def operations(char):
 
 
 if __name__ == '__main__':
-    operations(sys.argv[1])
+    main(sys.argv[1])
