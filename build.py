@@ -4,6 +4,7 @@ import os
 import sys
 import json
 import logging
+import shutil
 import wave
 from decimal import Decimal
 from time import time
@@ -118,6 +119,8 @@ def main(char):
     with open(json_out, 'w') as file_out:
         json.dump(file_list, file_out, sort_keys=True, indent=4)
     LOG.info('JSON written for %s.', char)
+
+    shutil.rmtree(AUDIO_DIR, ignore_errors=True)
 
 if __name__ == '__main__':
     START = time()
