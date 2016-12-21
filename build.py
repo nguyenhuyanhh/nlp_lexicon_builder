@@ -6,6 +6,7 @@ import json
 import logging
 import wave
 from decimal import Decimal
+from time import time
 
 import sox
 from slugify import slugify
@@ -110,8 +111,8 @@ def main(char):
         os.remove(file_)
 
     # build json
-    for file_ in sorted(file_list.keys()):
-        duration = Decimal(file_list[file_])
+    for file_, dur_ in sorted(file_list.items()):
+        duration = Decimal(dur_)
         file_list[file_] = str(start_time), str(start_time + duration)
         start_time += (duration + Decimal(PADDING))
     with open(json_out, 'w') as file_out:
@@ -119,4 +120,7 @@ def main(char):
     LOG.info('JSON written for %s.', char)
 
 if __name__ == '__main__':
+    START = time()
     main(sys.argv[1])
+    END = time()
+    LOG.info('Time taken: %s seconds.', END - START)
