@@ -3,6 +3,7 @@
 import os
 import json
 import logging
+import re
 from decimal import Decimal
 
 import sox
@@ -38,9 +39,9 @@ class Tts():
 
     def pronounce(self, word):
         """Extract pronunciation of a word to wav."""
-        index = word[0]
-        lookup = self.lexicon[index]
         try:
+            index = word[0]
+            lookup = self.lexicon[index]
             start_time = Decimal(lookup[word][0])
             end_time = Decimal(lookup[word][1])
             wav_file = os.path.join(self.lexpath, '{}.wav'.format(index))
@@ -56,7 +57,24 @@ class Tts():
             return None
 
 
+def text_to_speech(txt):
+    """Text-to-speech of a text."""
+    tts = Tts(os.path.join(CUR_DIR, 'build_output/'))
+    words = [w.lower() for w in re.compile(r'\w+').findall(txt)]
+    word_files = list()
+    for word in words:
+        result = tts.pronounce(word)
+        if result is not None:
+            word_files.append(result)
+    out_file = os.path.join(TTS_DIR, 'result.wav')
+    cbm = sox.Combiner()
+    cbm.build(word_files, out_file, 'concatenate')
+    for file_ in word_files:
+        os.remove(file_)
+    LOG.info('Completed.')
+
+
 if __name__ == '__main__':
-    TTS = Tts(os.path.join(CUR_DIR, 'build_output/'))
-    TTS.pronounce('apple')
-    TTS.pronounce('gaygisu')
+    with open(os.path.join(TTS_DIR, 'input.txt'), 'r') as text_:
+        TEXT = text_.read()
+    text_to_speech(TEXT)
