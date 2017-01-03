@@ -5,6 +5,7 @@ __pycache__/
 # Data
 downloader/
 build_output/
+tts/
 
 # VSCode
 .vscode/
